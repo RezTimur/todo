@@ -1,57 +1,126 @@
 from telegram.ext import CallbackContext, ConversationHandler
-from telegram import Update,ReplyKeyboardMarkup,ReplyKeyboardRemove
+from telegram import (
+    Update,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove
+)
 import random
+import pymorphy2
+from stickers import *
 
-GO = "let's go"
-BEGIN,LEVEL,GAME = 1,2,3
-EASY,MEDIUM,HARD ="Простой","Средний","Средний"
+morph = pymorphy2.MorphAnalyzer()
 
-def start(update:Update, context: CallbackContext):
+
+NAME, BEGIN, LEVEL, GAME = range(4)
+GO = "Вперед"
+SKIP = "Пропустить"
+EASY, MEDIUM, HARD = "Простой", "Средний", "Сложный"
+
+
+def start(update: Update, context: CallbackContext):
     mark_up = [[GO]]
-    Keyboard = ReplyKeyboardMarkup(
+    keyboard = ReplyKeyboardMarkup(
         keyboard=mark_up,
         resize_keyboard=True,
-        one_time_keyboard = True,
-        input_field_placeholder = f'Нажми на кнопку "{GO}",поиграем '     
-
-
+        one_time_keyboard=True,
+        input_field_placeholder=f'Нажми на кнопку "{GO}", поиграем!'
     )
-    # update.message.reply_text()
+    update.message.reply_sticker(START_STICKER)
     update.message.reply_text(
-        f'Чтобы начать, нажми на "{GO}', reply_markup=Keyboard    )
+        'В этой игре компьютер загадывает слово, и говорит тебе, сколько в нем букв')
+    update.message.reply_text('Ты говоришь слово из такого же количества букв')
+    update.message.reply_text(
+        'Если у какой-то из букв твоего совпадает позиция с буквой из загаданного слова - это бык')
+    update.message.reply_text(
+        'Если просто такая буква есть в слове - это корова')
+    update.message.reply_text("Твоя цель - отгадать загаданное слово")
+    update.message.reply_text(
+        f'Чтобы начать, нажми на "{GO}"', reply_markup=keyboard)
+    return NAME
+
+def get_name(update: Update, context: CallbackContext):
+    mark_up = [[SKIP]]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=mark_up,
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+    full_name = update.effective_chat.full_name
+    
+    update.message.reply_text(f"Можно называть вас {full_name}? Если нет, то введите свое имя, иначе - нажмите {SKIP}", reply_markup=keyboard)
     return BEGIN
 
-def begin(update:Update,context: CallbackContext):
+def begin(update: Update, context: CallbackContext):
+    name = update.message.text
+    if name == SKIP:
+        name = update.effective_chat.full_name
+    context.user_data['имя'] = name
+    mark_up = [[EASY, MEDIUM, HARD]]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=mark_up,
+        resize_keyboard=True,
+        one_time_keyboard=True,
+        input_field_placeholder=f'{EASY} - 3 буквы, {MEDIUM} - 4 буквы, {HARD} - 5 букв'
+    )
+    
+    update.message.reply_text(f'Выбери уровень сложности, {name}, или нажми /end!', reply_markup=keyboard)
     # если ключа "секретное число" нет в рюкзаке
-    secret_number = random.randint(1000, 9999)
-    context.user_data['секретное число'] = secret_number
-    update.message.reply_text('Напиши число')
-    input_field_placeholder=f'
+    # secret_number = random.randint(1000, 9999)
+    # context.user_data['секретное число'] = secret_number
+    # update.message.reply_text('Я загадал число, отгадай или нажми /end!')
     # создается "секретное число" в рюкзаке
-    return  GAME
+    return LEVEL
+
+def level(update: Update, context: CallbackContext):
+    level_storage = update.message.text #ответ пользователя
+    name = context.user_data['имя'] #извлекаем имя 
+    if level_storage == EASY:
+        with open("02_cows_and_bulls/easy.txt", encoding="utf-8") as file:
+            words = file.read().split("\n")
+    elif level_storage == MEDIUM:
+        with open("02_cows_and_bulls/medium.txt", encoding="utf-8") as file:
+            words = file.read().split("\n")
+    elif level_storage == HARD:
+        with open("02_cows_and_bulls/hard.txt", encoding="utf-8") as file:
+            words = file.read().split("\n")
+    else:
+        update.message.reply_text(f"{name}, этот файл недоступен")
+    word = random.choice(words)
+    context.user_data["word"] = word
+    update.message.reply_text(f'{name}, отгадайте мое слово. Количество букв в нем -  {len(word)}.')
+    return GAME
+    
 
 
 def game(update: Update, context: CallbackContext):  # callback'
-    message = update.message.text
-    secret_number = context.user_data['секретное число']  # достаем из рюкзака
-    if len(message) != 4 and not message.isdigit():#не число
-        update.message.reply_text("Вводить можно только четырехзначные числа!")
-        return#выход из функции
+    my_word = update.message.text.lower()
+    tag = morph.parse(my_word)[0] # набор граммем (число, род, падеж, время)
+    # 0 - это первый падеж (именительный)
+    secret_word = context.user_data['word']  # достаем из рюкзака
+    update.message.reply_sticker()
+    
+    if len(my_word) != len(secret_word) and not my_word.isalpha():
+        update.message.reply_text(f"Нужно вводить слова из {len(secret_word)} букв")
+        return  # выход из функции
+    elif my_word != tag.normal_form or tag.tag.POS != 'NOUN'  or 'DictionaryAnalyzer()' not in str(tag.methods_stack):
+        # если не начальная форма и не существительное
+        update.message.reply_text(f"Нужно вводить НОРМАЛЬНЫЕ слова из {len(secret_word)} букв")
+        return
     cows = 0
     bulls = 0
-    secret_number = str(secret_number)
-    for mesto, chislo in enumerate(message):
-        if chislo in secret_number:
-            if message[mesto] == secret_number[mesto]:
-                bulls += 1
-            else:
-                cows += 1
-    update.message.reply_text(f'В вашем числе {cows} коров и {bulls} быков')
-    if bulls == 4:
-        update.message.reply_text('Вы угадали! Вы красавчик')
-        del context.user_data['секретное число']
+    for mesto, letter in enumerate(my_word): # проходимся по букве и ее месту в слове
+        if letter in secret_word: # если  буква  в секретном слове
+            if my_word[mesto] == secret_word[mesto]: # если местоположение букв в моем и секретном слове совпадает
+                bulls += 1 # прибавляем быков
+            else: # если местоположение не совпадает
+                cows += 1 # прибавляем коров
+    update.message.reply_text(f'В вашем слове {cows} коров и {bulls} быков')
+    if bulls == len(secret_word):
+        update.message.reply_text('Вы угадали! Вы красавчик. Если хотите начать заново, нажмите /start')
+        del context.user_data['word']
 
-
-def end(update: Update, context: CallbackContext):
-    update.message.reply_text('Значит, ты выбрал конец')
+def end(update: Update, context: CallbackContext):  # точка выхода
+    name = context.user_data['имя']
+    update.message.reply_text(f"Значит, ты выбрал конец, {name}. Если хотите начать заново, нажмите /start")
     return ConversationHandler.END
+
