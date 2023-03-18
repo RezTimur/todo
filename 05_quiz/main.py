@@ -17,7 +17,9 @@ dispatcher = updater.dispatcher
 
 conv_handler = ConversationHandler(
     entry_points=[CommandHandler('start', start)],
-    states={},
+    states={
+        GAME:[MessageHandler(Filters.text & ~ Filters.command,game) ]
+    },
     fallbacks=[CommandHandler('end', end)]
 )
 
