@@ -6,10 +6,12 @@ from telegram import (
     ReplyKeyboardRemove
 )
 import random
+from stickers import *
+from constants import *
 
 GO = 'Поехали'
-GAME = 1
-QUSTIONS_ON_ROND = 7
+
+
 
 
 def start(update: Update, context: CallbackContext):
@@ -20,41 +22,24 @@ def start(update: Update, context: CallbackContext):
         one_time_keyboard=True,
         input_field_placeholder=f'Нажми на кнопку "{GO}", поиграем!'
     )
-    # update.message.reply_sticker(START_STICKER)
+    update.message.reply_sticker(START_STICKER)
     update.message.reply_text(
-        'Добро пожаловать в викторину! Выбирайте правильный ответ')
+        '')
     update.message.reply_text(
         f'Чтобы начать, нажми на "{GO}"', reply_markup=keyboard)
-    questions = read_csv() # берем все вопросы
-    random.shuffle(questions)
-    questions = questions[QUSTIONS_ON_ROND:]
-    context.user_data["вопросы"] = questions
-    context.user_data["right_answer"] = GO
-    context.user_data["вопросы"] = questions
-    context.user_data["сч"]
-    return GAME
+    
+    return 
 
-
-def game(update: Update, context: CallbackContext):
-    questions = context.user_data["вопросы"]
-    answers = questions.pop()
-    questions_text = answers.pop(0)
-    right_answer = answers[0]
-    random.shuffle(answers)
-    mark_up = [answers[:2],answers[2:]]
+def get_menu(update: Update, context: CallbackContext):
+    mark_up = [[CREATE, SHOW, UPDATE ], [COMPLETE,DELETE ] ]
     keyboard = ReplyKeyboardMarkup(
         keyboard=mark_up,
-        resize_keyboard=True
+        resize_keyboard=True,
+        one_time_keyboard=True
     )
-    update.message.reply_text(questions_text, reply_markup=keyboard)
-    
-    user_answer = update.message.edit_text
-    if user_answer == right_answer:
-        update.message.reply_sticker('CAACAgIAAxkBAAIW82QV5rWduljXPVx06I4PYyfOE9wpAAIJAQACihKqDtIgSfPqZhBdLwQ')
-    elif user_answer == GO:
-        pass
-    else:
-        update.message.reply_sticker('CAACAgIAAxkBAAIW9mQV5r0cGE-o2fa59iRz6iLuGHclAAIgAQACihKqDo73SNr_IzmSLwQ')
+    update.message.reply_sticker(START_STICKER)
+    update.message.reply_text(
+        '')
 
 
 def end(update: Update, context: CallbackContext):  # точка выхода
