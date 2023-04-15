@@ -6,7 +6,8 @@ from telegram.ext import (
     CommandHandler,
     ConversationHandler
 )
-from functions import *
+from start_menu import *
+from interrput import *
 
 
 
@@ -16,11 +17,14 @@ updater = Updater(TOKEN)
 dispatcher = updater.dispatcher
 
 conv_handler = ConversationHandler(
-    entry_points=[CommandHandler('start', start)],
-    states={
-    
+    entry_points=[CommandHandler('start', start)], # точка входа
+    states={ #шаги
+        MENU: [MessageHandler(Filters.text, get_menu)],
+        ACTION:[
+            MessageHandler(Filters.text & ~Filters.command, wrong_message)        
+        ]
     },
-    fallbacks=[CommandHandler('end', end)]
+    fallbacks=[CommandHandler('end', end)] # точка выхода
 )
 
 
