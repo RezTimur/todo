@@ -12,4 +12,18 @@ def end(update: Update, context: CallbackContext):  # точка выхода
     return ConversationHandler.END
 
 def wrong_message(update:Update, context: CallbackContext):
-    update.message
+    update.message.reply_sticker(
+        'CAACAgUAAxkBAAIOx2N4mLSkQWGFUqqzpaTTmfmqizeeAAKBCAACxlHGFZXfauYX-8AwKwQ')
+    update.message.reply_text('Такой команды нет', reply_markup=keyboard)
+
+def endpoint(update: Update, context: CallbackContext):
+    update.message.reply_text('Вы решили не добавлять дело')
+    return ConversationHandler.END
+
+def delete_message(update: Update, context: CallbackContext, start=0, end=1):
+    try:
+        for i in range(start,end):
+            context.bot.delete_message(update.effective_chat.id,update.effective_message.message_id - i)
+    except:
+        pass
+

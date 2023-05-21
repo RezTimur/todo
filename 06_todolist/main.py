@@ -8,9 +8,7 @@ from telegram.ext import (
 )
 from start_menu import *
 from interrput import *
-
-
-
+from task_create import add_handler
 
 
 updater = Updater(TOKEN)
@@ -21,6 +19,7 @@ conv_handler = ConversationHandler(
     states={ #шаги
         MENU: [MessageHandler(Filters.text, get_menu)],
         ACTION:[
+            add_handler,
             MessageHandler(Filters.text & ~Filters.command, wrong_message)        
         ]
     },

@@ -37,9 +37,13 @@ def start(update: Update, context: CallbackContext):
 
 def game(update: Update, context: CallbackContext):
     questions = context.user_data["вопросы"]
+    #взять ответ пользователя
+    #взять из рюкзака правильный ответ
+
     answers = questions.pop()
     questions_text = answers.pop(0)
     right_answer = answers[0]
+    #сохранить правильный ответ в рюкзак
     random.shuffle(answers)
     mark_up = [answers[:2],answers[2:]]
     keyboard = ReplyKeyboardMarkup(
@@ -48,6 +52,7 @@ def game(update: Update, context: CallbackContext):
     )
     update.message.reply_text(questions_text, reply_markup=keyboard)
     
+    #подумай, где должна быть эта часть
     user_answer = update.message.edit_text
     if user_answer == right_answer:
         update.message.reply_sticker('CAACAgIAAxkBAAIW82QV5rWduljXPVx06I4PYyfOE9wpAAIJAQACihKqDtIgSfPqZhBdLwQ')
