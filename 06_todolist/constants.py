@@ -1,7 +1,8 @@
 from telegram import ReplyKeyboardMarkup
 
 GO = 'Поехали'
-MENU, ACTION, TASK, DATE, HOUR = range(5)
+CONTINUE = 'Продолжить'
+MENU, ACTION, TASK, DATE, HOUR, MINUTE, RESULT = range(7)
 
 CREATE = "Создать"
 SHOW = "Показать все дела"
